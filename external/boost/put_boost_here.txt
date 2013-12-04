@@ -1,0 +1,4 @@
+This directory should contain two subdirectories
+
+./include           Contains the boost headers to include.
+./lib               Contains the boost libraries to link.
