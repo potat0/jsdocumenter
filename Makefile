@@ -1,0 +1,40 @@
+MAKEFILE_PATH = $(lastword $(MAKEFILE_LIST))
+MAKEFILE_DIR = $(dir $(MAKEFILE_PATH))
+
+CXX_FLAGS_BASIC = -g
+CXX_INCLUDES = external/boost/include
+
+CXXFLAGS = $(CXX_FLAGS_BASIC) $(addprefix -I, $(CXX_INCLUDES))
+CXXFLAGS_PRECOMPILE = -I$(dir $(PRECOMPILE_HEADER)) -include $(notdir $(PRECOMPILE_HEADER_SOURCE))
+CXX = g++
+
+SOURCES = main.cpp
+BIN = $(MAKEFILE_DIR)/bin
+SOURCE_ROOT = $(MAKEFILE_DIR)/src
+INTERMEDIATE_ROOT = $(MAKEFILE_DIR)/intermediate
+OBJECTS = $(addprefix $(INTERMEDIATE_ROOT)/, $(patsubst %.cpp,%.o, $(SOURCES)))
+PRECOMPILE_HEADER_SOURCE = $(SOURCE_ROOT)/precompile.h
+PRECOMPILE_HEADER = $(patsubst $(SOURCE_ROOT)/%.h, $(INTERMEDIATE_ROOT)/%.h.gch, $(PRECOMPILE_HEADER_SOURCE))
+TARGET = $(BIN)/jsdocumenter
+
+.PHONY: clean doc
+.SUFFIXES: .cpp
+
+$(TARGET): $(OBJECTS) $(BIN)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
+
+$(INTERMEDIATE_ROOT):
+	mkdir $@
+
+$(BIN):
+	mkdir $@
+
+$(PRECOMPILE_HEADER): $(PRECOMPILE_HEADER_SOURCE) | $(INTERMEDIATE_ROOT)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(INTERMEDIATE_ROOT)/%.o: $(SOURCE_ROOT)/%.cpp $(PRECOMPILE_HEADER) | $(INTERMEDIATE_ROOT)
+	$(CXX) $(CXXFLAGS) $(CXX_FLAGS_PRECOMPILE) -c -o $@ $<
+
+clean:
+	$(RM) -r $(INTERMEDIATE_ROOT)
+	$(RM) $(TARGET)
